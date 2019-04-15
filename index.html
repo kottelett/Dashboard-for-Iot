@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>.bg-white {
+      background-color : rgb(235, 238, 240);
+      color : rgb(228, 219, 224);
+      } </style>
+    <style> .alertstyle {
+      background-color : rgb(50, 52, 64);
+      color : rgb(239, 246, 246);
+      margin-bottom: 0px;
+    }
+  </style>
+  <style> .rowline {
+    border-bottom: 1px solid rgb(142, 128, 141);
+  }
+  </style>
+  <script>window.$ = window.jQuery = require('jquery');</script>
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  </head>
+
+
+  <body class = "bg-dark">
+
+<div class = "container" id="mainCont">
+<div class ="row">
+<div class ="col text-center">
+<h1 class ="display-4">A dashboard</div>
+ </div>
+ </div>
+
+</div>
+<!--#endregion-->
+
+
+
+<script> var channel = new WebSocket("ws://websocketdev.rtw.no/academy7/plantstat/1/channel");
+  var string = new WebSocket("ws://websocketdev.rtw.no/academy7/plantstat/2/string");
+  var token = "aToken_e3b9aabf40c5277023d164f6b718dbc772f27ad2b33333b1614829d6696cda1e";
+  waitForConnection();
+
+
+function waitForConnection(){
+  if(channel.readyState === 1){
+  console.log("Connected!");
+  channel.send('{"token":"'+token+'"}');
+  console.log("Sendt token")
+  }
+  else{
+  setTimeout(function(){waitForConnection();}, 500);
+}
+}
+
+function sendRTW(btnid){
+let updateStatus;
+let element = document.getElementById(btnid);
+if(!element){return;}
+if(element.getElementsByClassName("alert")[0].innerText == "on"){
+  updateStatus = "off";
+}else {
+  updateStatus = "on";
+}
+
+
+
+  if(string.readyState == 0){
+    setTimeout(function(){sendRTW(updateStatus);}, 1000);
+    return;
+  }
+
+  if(string.readyState !== 1){
+    string = new WebSocket("ws://websocketdev.rtw.no/academy7/plantstat/2/string");
+    setTimeout(function(){sendRTW(updateStatus);}, 1000);
+    return;
+  }
+
+  string.send(`{"token":"${token}", "UPDATESTATUS":"${updateStatus}", "WATERLEVEL":"A", "ON":"B", "TIMESTAMP":"C", "LOCATION":"${btnid}"}`);
+  console.log("SendRtw completed");
+  console.log(updateStatus + "wut");
+  return;
+}
+
+channel.onmessage = function (event) {
+if(event.data == "Disconnected") {
+  channel = new WebSocket("ws://websocketdev.rtw.no/academy7/plantstat/1/channel");
+  waitForConnection();
+  return;
+}
+var obj = JSON.parse(event.data);
+
+console.log(obj);
+if(obj.RTW.UPDATESTATUS != ""){
+  return;
+}
+
+if(!document.getElementById(obj.RTW.LOCATION)){
+  adde(obj.RTW.LOCATION, obj.RTW.ON, obj.RTW.WATERLEVEL, obj.RTW.TIMESTAMP);
+  return;
+}
+
+let element = document.getElementById(obj.RTW.LOCATION);
+element.getElementsByClassName("alert")[0].innerText = obj.RTW.ON;
+element.getElementsByClassName("alert")[1].innerText = obj.RTW.WATERLEVEL;
+element.getElementsByClassName("alert")[2].innerText = obj.RTW.LOCATION;
+element.getElementsByClassName("alert")[3].innerText = obj.RTW.TIMESTAMP;
+}
+</script>
+
+<script>
+
+function setStatus() {
+  sendRTW("on");
+  console.log("setStatus entered");
+
+}
+
+</script>
+
+<script>
+var btn = "btn";
+let collapse = "collapse";
+let rowCount = 0;
+let checkSend = false;
+function adde(id, onoff, waterlevel, timestamp) {
+
+  collapseid = "collapse" + rowCount;
+  btnid = "btn" + rowCount;
+  $("#mainCont").append(`
+  <div class = "row rowline" id="${id}">
+  <div class = "col" style="border-left:1px solid rgb(142, 128, 141)">
+  <button type="button"  class="btn btn-dark btn-m btn-block mt-2 mb-2" type="button" data-toggle="collapse" data-target="#${collapseid}" aria-expanded="false">Dark</button>
+  </div>
+  <div class = "col">
+  <div class="alert alertstyle" role="alert">
+    ${onoff}
+  </div>
+  </div>
+  <div class = "col">
+  <div  class="alert alertstyle" role="alert">
+    ${waterlevel}
+  </div>
+  </div>
+  <div class = "col">
+  <div class="alert alertstyle" role="alert">
+    ${id}
+  </div>
+  </div>
+  <div class = "col pr-0">
+    <div class="alert alertstyle" role="alert" style="border-right:1px solid rgb(142, 128, 141)">
+    ${timestamp}
+  </div>
+  </div>
+  </div>
+  <div class ="collapse hide" id="${collapseid}">
+  <div class="row">
+  <div class="col pt-4">
+  <button class="btn btn-primary" onclick='sendRTW("${id}")'>Toggle</button>
+    <button class="btn btn-primary" onclick='deleteRow("${collapseid}", "${id}")'>Delete</button>
+    </div>
+  </div>
+  </div>`);
+  rowCount += 1;
+  console.log(btnid + collapseid);
+    if(!checkSend){
+      sendRTW(id);
+      checkSend = true;
+    }
+}
+function deleteRow(id, collapseid){
+  $(`#${id}`).remove();
+  $(`#${collapseid}`).remove()
+}
+</script>
+</body>
+</html>
