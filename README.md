@@ -1,3 +1,5 @@
+COMPILE THE .INO FILE ON PARTICLE DEVICE. THEN FOLLOW THIS HANDY GUIDE BENEATH :)
+
 # electron-quick-start
 
 **Clone and run for a quick way to see Electron in action.**
